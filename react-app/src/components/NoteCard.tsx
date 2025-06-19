@@ -1,26 +1,36 @@
 import React, { useState } from 'react';
-import { Trash2, Calendar, Tag, Edit3, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Calendar, Tag, Edit3, Eye, EyeOff, Loader2 } from 'lucide-react';
 import type { Note } from '../types/Notes';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 
 interface NoteCardProps {
   note: Note;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onEdit: (note: Note) => void;
+  isDeleting?: any;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) => {
+export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit, isDeleting = false }) => {
   const [showMarkdown, setShowMarkdown] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleDeleteClick = () => {
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirm = () => {
-    onDelete(note.id);
-    setShowDeleteModal(false);
+  const handleDeleteConfirm = async () => {
+    try {
+      setDeleting(true);
+      await onDelete(note.id);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      // Keep modal open on error
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleDeleteCancel = () => {
@@ -58,10 +68,13 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) =>
   };
 
   const shouldShowMarkdownToggle = hasMarkdownSyntax(note.content);
+  const isActionDisabled = isDeleting || deleting;
 
   return (
     <>
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:scale-[1.02] group hover:border-gray-600/50">
+      <div className={`bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:scale-[1.02] group hover:border-gray-600/50 ${
+        isActionDisabled ? 'opacity-50 pointer-events-none' : ''
+      }`}>
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-xl font-semibold text-gray-100 group-hover:text-blue-400 transition-colors duration-200 flex-1 mr-4">
             {note.title}
@@ -70,7 +83,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) =>
             {shouldShowMarkdownToggle && (
               <button
                 onClick={() => setShowMarkdown(!showMarkdown)}
-                className="text-gray-500 hover:text-blue-400 transition-colors duration-200 p-1 rounded-lg hover:bg-blue-900/20"
+                disabled={isActionDisabled}
+                className="text-gray-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 p-1 rounded-lg hover:bg-blue-900/20"
                 title={showMarkdown ? "Show raw text" : "Show markdown"}
               >
                 {showMarkdown ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -78,17 +92,23 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) =>
             )}
             <button
               onClick={handleEdit}
-              className="text-gray-500 hover:text-blue-400 transition-colors duration-200 p-1 rounded-lg hover:bg-blue-900/20"
+              disabled={isActionDisabled}
+              className="text-gray-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 p-1 rounded-lg hover:bg-blue-900/20"
               title="Edit note"
             >
               <Edit3 size={18} />
             </button>
             <button
               onClick={handleDeleteClick}
-              className="text-gray-500 hover:text-red-400 transition-colors duration-200 p-1 rounded-lg hover:bg-red-900/20"
+              disabled={isActionDisabled}
+              className="text-gray-500 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 p-1 rounded-lg hover:bg-red-900/20 flex items-center gap-1"
               title="Delete note"
             >
-              <Trash2 size={18} />
+              {deleting ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Trash2 size={18} />
+              )}
             </button>
           </div>
         </div>
@@ -136,6 +156,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) =>
         noteTitle={note.title}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
+        isDeleting={deleting}
       />
     </>
   );
