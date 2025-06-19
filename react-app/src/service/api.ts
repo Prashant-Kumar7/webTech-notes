@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://webtech-notes-backend.onrender.com';
 
 export interface ApiNote {
   id: string;
