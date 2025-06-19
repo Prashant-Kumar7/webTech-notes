@@ -18,7 +18,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   availableTags
 }) => {
   return (
-    <div className="bg-gray-800/50 relative z-50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/50 mb-8">
+    <div className="bg-gray-800/50 relative z-30 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/50 mb-8">
       <div className="flex flex-col  sm:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
